@@ -16,9 +16,12 @@
    CCP2		  RES	     1	    ;los servos
    CCP3		  RES	     1
    CCP4		  RES	     1
+   CCP31	  RES	     1
+   CCP41	  RES	     1
    SERVO3	  RES	     1	    ;Variables que me servirán para darle un 
    SERVO4	  RES	     1	    ;límite al avance del servo
    CONTADOR	  RES	     1      ;Variable control
+   CONTADOR1	  RES	     1
 ;*******************************************************************************
 ; Reset Vector
 ;*******************************************************************************
@@ -55,16 +58,26 @@ POP:
     MOVWF   TMR0
     BCF	    INTCON, T0IF
     MOVLW   .0
-    SUBWF   CCP3,0
+    SUBWF   CCP31,0
     BTFSC   STATUS,Z
-    BCF	    PORTD,RD0
+    CALL    PARAR
     CALL    MOVER
     REVISION:
-    MOVF    CCP3,W
+    MOVF    CCP31,W
     SUBWF   CONTADOR
     BTFSS   STATUS,C
     CALL    DETENER
     
+    MOVLW   .0
+    SUBWF   CCP41,0
+    BTFSC   STATUS,Z
+    CALL    PARAR1
+    CALL    MOVER1
+    REVISION1:
+    MOVF    CCP41,W
+    SUBWF   CONTADOR1
+    BTFSS   STATUS,C
+    CALL    DETENER1
     RETURN
      
 ;-------------------------------------------------------------------------------
@@ -80,6 +93,19 @@ POP:
     DETENER:
     BCF	    PORTD,RD0
     RETURN
+    
+     PARAR1:
+     BCF    PORTD,RD1
+     GOTO   REVISION1
+    
+    MOVER1:
+    INCF    CONTADOR1
+    BSF	    PORTD,RD1
+    RETURN
+    
+    DETENER1:
+    BCF	    PORTD,RD1
+    RETURN
      
 ;*******************************************************************************
 ; MAIN PROGRAM
@@ -89,7 +115,7 @@ START
 ;*******************************************************************************
     CALL    CONFIG_RELOJ	    ; RELOJ INTERNO DE 2Mhz
     CALL    CONFIG_IO
-    ;CALL    CONFIG_TX_RX	    ; 10417hz
+    CALL    CONFIG_TX_RX	    ; 10417hz
     CALL    CONFIG_ADC		    ; canal 0, fosc/8, adc on, justificado a la izquierda, Vref interno (0-5V)
     CALL    CONFIG_PWM1
     CALL    CONFIG_PWM2		    ;Configuración para los primeros 2 servos
@@ -115,14 +141,14 @@ CHECK_AD:
     GOTO    CHECK_AD
     BCF	    PIR1, ADIF		    ; borramos la bandera del adc
     MOVFW   ADRESH
-    MOVWF   CCPR1L		    ; MOVEMOS EL VALOR HACIA VARIABLE CCP1
+    MOVWF   CCP1		    ; MOVEMOS EL VALOR HACIA VARIABLE CCP1
 
     
     BCF	    ADCON0, CHS3	    ; CANAL 1 PARA LA CONVERSION
     BCF	    ADCON0, CHS2
     BCF	    ADCON0, CHS1
     BSF	    ADCON0, CHS0
-    CALL    DELAY_500US
+    CALL    DELAY_50MS
     BSF     ADCON0, GO		    ; EMPIECE LA CONVERSIÓN
 CHECKADC1:
     BTFSC   ADCON0, GO		    ; LOOP HASTA QUE TERMINE DE CONVERTIR
@@ -136,7 +162,7 @@ CHECKADC1:
     BCF	    ADCON0, CHS2
     BSF	    ADCON0, CHS1
     BCF	    ADCON0, CHS0
-    CALL    DELAY_500US
+    CALL    DELAY_50MS
     BSF     ADCON0, GO		    ; EMPIECE LA CONVERSIÓN
 CHECKADC2:
     BTFSC   ADCON0, GO		    ; LOOP HASTA QUE TERMINE DE CONVERTIR
@@ -150,7 +176,7 @@ CHECKADC2:
     BCF	    ADCON0, CHS2
     BSF	    ADCON0, CHS1
     BSF	    ADCON0, CHS0
-    CALL    DELAY_500US
+    CALL    DELAY_50MS
     BSF     ADCON0, GO		    ; EMPIECE LA CONVERSIÓN
 CHECKADC3:
     BTFSC   ADCON0, GO		    ; LOOP HASTA QUE TERMINE DE CONVERTIR
@@ -170,10 +196,13 @@ CHECKADC3:
     ;MOVWF   CCPR2L
     ;CALL    DELAY_500US
     ;MOVF    RCREG, W
-    ;MOVWF   PORTD
+    ;MOVWF   CCP31
     ;CALL    DELAY_500US
     ;MOVF    RCREG, W
-    ;MOVWF   PORTC
+    ;MOVWF   CCP41
+    ;CALL    DELAY_500US
+    ;MOVF    RCREG, W
+    ;MOVWF   
     
     
 ;CHECK_TXIF: 
@@ -181,12 +210,16 @@ CHECKADC3:
     ;GOTO    CHECK_TXIF
     ;MOVFW   CCP1		    ; ENVÍA CCP1 POR EL TX
     ;MOVWF   TXREG
+    ;CALL    DELAY_500US
     ;MOVFW   CCP2		    ; ENVÍA CCP2 POR EL TX
     ;MOVWF   TXREG
+    ;CALL    DELAY_500US
     ;MOVFW   CCP3		    ; ENVÍA CCP3 POR EL TX
     ;MOVWF   TXREG
+    ;CALL    DELAY_500US
     ;MOVFW   CCP4		    ; ENVÍA CCP4 POR EL TX
     ;MOVWF   TXREG
+    ;CALL    DELAY_500US
     ;MOVLW   .13		    ; ENVÍA 13 POR EL TX. Así los servos sabrán 
     ;MOVWF   TXREG		    ;que valor tomar sin traslaparse
    
@@ -259,7 +292,7 @@ CONFIG_IO
     RETURN
 ;-----------------------------------------------
 DELAY_50MS
-    MOVLW   .100		    ; 1US 
+    MOVLW   .50		    ; 1US 
     MOVWF   DELAY2
     CALL    DELAY_500US
     DECFSZ  DELAY2		    ;DECREMENTA CONT1
