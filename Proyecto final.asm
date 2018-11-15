@@ -186,42 +186,40 @@ CHECKADC3:
     MOVWF   CCP4		    ; MOVEMOS EL VALOR HACIA VARIABLE	CCP1
 	
     
-    ;CHECK_RCIF:		    ; RECIBE EN RX y lo manda al registro que controla al servo
-    ;BTFSS   PIR1, RCIF
-    ;GOTO    CHECK_TXIF
-    ;MOVF    RCREG, W
-    ;MOVWF   CCPR1L
-    ;CALL    DELAY_500US
-    ;MOVF    RCREG, W
-    ;MOVWF   CCPR2L
-    ;CALL    DELAY_500US
-    ;MOVF    RCREG, W
-    ;MOVWF   CCP31
-    ;CALL    DELAY_500US
-    ;MOVF    RCREG, W
-    ;MOVWF   CCP41
-    ;CALL    DELAY_500US
-    ;MOVF    RCREG, W
-    ;MOVWF   
+    CHECK_RCIF:		    ; RECIBE EN RX y lo manda al registro que controla al servo
+    BTFSS   PIR1, RCIF
+    GOTO    CHECK_TXIF
+    MOVF    RCREG, W
+    MOVWF   CCPR1L
+    CALL    DELAY_500US
+    MOVF    RCREG, W
+    MOVWF   CCPR2L
+    CALL    DELAY_500US
+    MOVF    RCREG, W
+    MOVWF   CCP31
+    CALL    DELAY_500US
+    MOVF    RCREG, W
+    MOVWF   CCP41
+  
     
     
-;CHECK_TXIF: 
-    ;BTFSS   PIR1, TXIF
-    ;GOTO    CHECK_TXIF
-    ;MOVFW   CCP1		    ; ENVÍA CCP1 POR EL TX
-    ;MOVWF   TXREG
-    ;CALL    DELAY_500US
-    ;MOVFW   CCP2		    ; ENVÍA CCP2 POR EL TX
-    ;MOVWF   TXREG
-    ;CALL    DELAY_500US
-    ;MOVFW   CCP3		    ; ENVÍA CCP3 POR EL TX
-    ;MOVWF   TXREG
-    ;CALL    DELAY_500US
-    ;MOVFW   CCP4		    ; ENVÍA CCP4 POR EL TX
-    ;MOVWF   TXREG
-    ;CALL    DELAY_500US
-    ;MOVLW   .13		    ; ENVÍA 13 POR EL TX. Así los servos sabrán 
-    ;MOVWF   TXREG		    ;que valor tomar sin traslaparse
+CHECK_TXIF: 
+    BTFSS   PIR1, TXIF
+    GOTO    CHECK_TXIF
+    MOVFW   CCP1		    ; ENVÍA CCP1 POR EL TX
+    MOVWF   TXREG
+    CALL    DELAY_500US
+    MOVFW   CCP2		    ; ENVÍA CCP2 POR EL TX
+    MOVWF   TXREG
+    CALL    DELAY_500US
+    MOVFW   CCP3		    ; ENVÍA CCP3 POR EL TX
+    MOVWF   TXREG
+    CALL    DELAY_500US
+    MOVFW   CCP4		    ; ENVÍA CCP4 POR EL TX
+    MOVWF   TXREG
+    CALL    DELAY_500US
+    MOVLW   .13		    ; ENVÍA 13 POR EL TX. Así los servos sabrán 
+    MOVWF   TXREG		    ;que valor tomar sin traslaparse
    
     
     GOTO LOOP
