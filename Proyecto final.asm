@@ -22,6 +22,8 @@
    SERVO4	  RES	     1	    ;límite al avance del servo
    CONTADOR	  RES	     1      ;Variable control
    CONTADOR1	  RES	     1
+   FINAL	  RES	     1
+   LECTURA	  RES	     1
 ;*******************************************************************************
 ; Reset Vector
 ;*******************************************************************************
@@ -127,6 +129,12 @@ START
     CLRF    CCP2
     CLRF    CCP3
     CLRF    CCP4
+    CLRF    CONTADOR
+    CLRF    CONTADOR1
+    MOVLW   .13
+    MOVWF   FINAL
+    CLRF    LECTURA
+    BSF	    LESCTURA, 0
     
     
     LOOP:
@@ -189,20 +197,30 @@ CHECKADC3:
     CHECK_RCIF:		    ; RECIBE EN RX y lo manda al registro que controla al servo
     BTFSS   PIR1, RCIF
     GOTO    CHECK_TXIF
-    MOVF    RCREG, W
-    MOVWF   CCPR1L
-    CALL    DELAY_500US
-    MOVF    RCREG, W
-    MOVWF   CCPR2L
-    CALL    DELAY_500US
-    MOVF    RCREG, W
-    MOVWF   CCP31
-    CALL    DELAY_500US
-    MOVF    RCREG, W
-    MOVWF   CCP41
-  
-    
-    
+    MOVFW   RCREG
+    SUBWF   FINAL, W
+    BTFSS   STATUS, Z
+    ;MOVWF   CCPR1L
+    ;BTFSS   PIR1, RCIF
+    ;GOTO    CHECK_TXIF
+    ;MOVF    RCREG, W
+    ;MOVWF   CCPR2L
+    ;BTFSS   PIR1, RCIF
+    ;GOTO    CHECK_TXIF
+    ;MOVF    RCREG, W
+    ;MOVWF   CCP31
+    ;BTFSS   PIR1, RCIF
+    ;GOTO    CHECK_TXIF
+    ;MOVF    RCREG, W
+    ;MOVWF   CCP41
+    ;BTFSS   PIR1, RCIF
+    ;GOTO    CHECK_TXIF
+    ;MOVWF   RCREG
+    ;SUBWF   FINAL, W
+    ;BSF	    PORTD, RD7
+    ;BTFSS   STATUS, Z
+    ;GOTO    CHECK_RCIF
+
 CHECK_TXIF: 
     BTFSS   PIR1, TXIF
     GOTO    CHECK_TXIF
@@ -272,6 +290,7 @@ CONFIG_IO
     BANKSEL PORTA
     CLRF    PORTA
     CLRF    PORTC
+    CLRF    PORTD
     CLRF    PORTB
     RETURN    
 ;-----------------------------------------------
