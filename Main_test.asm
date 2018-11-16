@@ -197,11 +197,13 @@ CHECK_RCIF:		    ; RECIBE EN RX y lo manda al registro que controla al servo
     GOTO    CHECK_TXIF
     MOVFW   RCREG
     MOVWF   LECTURA
-    SUBLW   .13
-    BTFSC   STATUS, Z
+    MOVLW   .13
+    SUBWF   LECTURA, W
+    BTFSS   STATUS, Z
     GOTO    GUARDAR
     CLRF    SERVO
     BSF	    SERVO, 0
+    BSF	    PORTD, RD7
     GOTO    CHECK_TXIF
 
 GUARDAR:
@@ -213,12 +215,15 @@ GUARDAR:
     GOTO    VALOR2
     BTFSC   SERVO, 3
     GOTO    VALOR3
+    GOTO    CHECK_TXIF
     
 VALOR0:
     MOVFW   LECTURA
     MOVWF   CCPR1L
     BCF	    SERVO, 0
     BSF	    SERVO, 1
+    BCF	    PORTD, RD7
+    ;CALL    DELAY_50MS
     GOTO    CHECK_TXIF
     
 VALOR1:
@@ -226,6 +231,7 @@ VALOR1:
     MOVWF   CCPR2L
     BCF	    SERVO, 1
     BSF	    SERVO, 2
+    BCF	    PORTD, RD7
     GOTO    CHECK_TXIF
     
 VALOR2:
@@ -233,6 +239,7 @@ VALOR2:
     MOVWF   CCP31
     BCF	    SERVO, 2
     BSF	    SERVO, 3
+    BCF	    PORTD, RD7
     GOTO    CHECK_TXIF
     
 VALOR3:
@@ -240,6 +247,7 @@ VALOR3:
     MOVWF   CCP41
     BCF	    SERVO, 3
     BSF	    SERVO, 0
+    BCF	    PORTD, RD7
     GOTO    CHECK_TXIF
     
     ;MOVWF   CCPR1L
