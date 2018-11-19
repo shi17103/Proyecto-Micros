@@ -42,6 +42,8 @@ ISR       CODE    0x0004           ; interrupt vector location
 CHECKT0IF:
     BTFSC   INTCON, T0IF
     CALL    BANDERA_TMR0
+    BTFSC   PIR1, RCIF
+    CALL    CHECK_RCIF
     GOTO    POP
     
     
@@ -96,9 +98,9 @@ POP:
     BCF	    PORTD,RD0
     RETURN
     
-     PARAR1:
-     BCF    PORTD,RD1
-     GOTO   REVISION1
+    PARAR1:
+    BCF    PORTD,RD1
+    GOTO   REVISION1
     
     MOVER1:
     INCF    CONTADOR1
@@ -107,6 +109,65 @@ POP:
     
     DETENER1:
     BCF	    PORTD,RD1
+    RETURN
+    
+CHECK_RCIF:		    ; RECIBE EN RX y lo manda al registro que controla al servo
+    ;BTFSS   PIR1, RCIF	    ;Si el valor recibido es .13 reinicia el proceso de guardado
+    ;GOTO    CHECK_TXIF
+    MOVFW   RCREG
+    MOVWF   LECTURA
+    MOVLW   .13
+    SUBWF   LECTURA, W
+    BTFSS   STATUS, Z
+    GOTO    GUARDAR
+    CLRF    SERVO
+    BSF	    SERVO, 0
+    BSF	    PORTD, RD7
+    ;GOTO    CHECK_TXIF
+    RETURN
+
+GUARDAR:
+    BTFSC   SERVO, 0
+    GOTO    VALOR0
+    BTFSC   SERVO, 1
+    GOTO    VALOR1
+    BTFSC   SERVO, 2
+    GOTO    VALOR2
+    BTFSC   SERVO, 3
+    GOTO    VALOR3
+    RETURN
+    
+VALOR0:
+    MOVFW   LECTURA
+    MOVWF   CCPR1L
+    BCF	    SERVO, 0
+    BSF	    SERVO, 1
+    BCF	    PORTD, RD7
+    ;CALL    DELAY_50MS
+    RETURN
+    
+VALOR1:
+    MOVFW   LECTURA
+    MOVWF   CCPR2L
+    BCF	    SERVO, 1
+    BSF	    SERVO, 2
+    BCF	    PORTD, RD7
+    RETURN
+    
+VALOR2:
+    MOVFW   LECTURA
+    MOVWF   CCP31
+    BCF	    SERVO, 2
+    BSF	    SERVO, 3
+    BCF	    PORTD, RD7
+    RETURN
+    
+VALOR3:
+    MOVFW   LECTURA
+    MOVWF   CCP41
+    BCF	    SERVO, 3
+    BSF	    SERVO, 0
+    BCF	    PORTD, RD7
     RETURN
      
 ;*******************************************************************************
@@ -140,7 +201,7 @@ START
     BCF	    ADCON0, CHS2
     BCF	    ADCON0, CHS1
     BCF	    ADCON0, CHS0
-    CALL    DELAY_50MS
+    CALL    DELAY_500US
     BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
 CHECK_AD:
     BTFSC   ADCON0, GO		    ; revisa que terminó la conversión
@@ -154,7 +215,7 @@ CHECK_AD:
     BCF	    ADCON0, CHS2
     BCF	    ADCON0, CHS1
     BSF	    ADCON0, CHS0
-    CALL    DELAY_50MS
+    CALL    DELAY_500US
     BSF     ADCON0, GO		    ; EMPIECE LA CONVERSIÓN
 CHECKADC1:
     BTFSC   ADCON0, GO		    ; LOOP HASTA QUE TERMINE DE CONVERTIR
@@ -168,7 +229,7 @@ CHECKADC1:
     BCF	    ADCON0, CHS2
     BSF	    ADCON0, CHS1
     BCF	    ADCON0, CHS0
-    CALL    DELAY_50MS
+    CALL    DELAY_500US
     BSF     ADCON0, GO		    ; EMPIECE LA CONVERSIÓN
 CHECKADC2:
     BTFSC   ADCON0, GO		    ; LOOP HASTA QUE TERMINE DE CONVERTIR
@@ -182,7 +243,7 @@ CHECKADC2:
     BCF	    ADCON0, CHS2
     BSF	    ADCON0, CHS1
     BSF	    ADCON0, CHS0
-    CALL    DELAY_50MS
+    CALL    DELAY_500US
     BSF     ADCON0, GO		    ; EMPIECE LA CONVERSIÓN
 CHECKADC3:
     BTFSC   ADCON0, GO		    ; LOOP HASTA QUE TERMINE DE CONVERTIR
@@ -190,64 +251,6 @@ CHECKADC3:
     BCF	    PIR1, ADIF		    ; BORRAMOS BANDERA DE INTERRUPCION
     MOVFW   ADRESH
     MOVWF   CCP4		    ; MOVEMOS EL VALOR HACIA VARIABLE	CCP1
-	
-    
-CHECK_RCIF:		    ; RECIBE EN RX y lo manda al registro que controla al servo
-    BTFSS   PIR1, RCIF	    ;Si el valor recibido es .13 reinicia el proceso de guardado
-    GOTO    CHECK_TXIF
-    MOVFW   RCREG
-    MOVWF   LECTURA
-    MOVLW   .13
-    SUBWF   LECTURA, W
-    BTFSS   STATUS, Z
-    GOTO    GUARDAR
-    CLRF    SERVO
-    BSF	    SERVO, 0
-    BSF	    PORTD, RD7
-    GOTO    CHECK_TXIF
-
-GUARDAR:
-    BTFSC   SERVO, 0
-    GOTO    VALOR0
-    BTFSC   SERVO, 1
-    GOTO    VALOR1
-    BTFSC   SERVO, 2
-    GOTO    VALOR2
-    BTFSC   SERVO, 3
-    GOTO    VALOR3
-    GOTO    CHECK_TXIF
-    
-VALOR0:
-    MOVFW   LECTURA
-    MOVWF   CCPR1L
-    BCF	    SERVO, 0
-    BSF	    SERVO, 1
-    BCF	    PORTD, RD7
-    ;CALL    DELAY_50MS
-    GOTO    CHECK_TXIF
-    
-VALOR1:
-    MOVFW   LECTURA
-    MOVWF   CCPR2L
-    BCF	    SERVO, 1
-    BSF	    SERVO, 2
-    BCF	    PORTD, RD7
-    GOTO    CHECK_TXIF
-    
-VALOR2:
-    MOVFW   LECTURA
-    MOVWF   CCP31
-    BCF	    SERVO, 2
-    BSF	    SERVO, 3
-    BCF	    PORTD, RD7
-    GOTO    CHECK_TXIF
-    
-VALOR3:
-    MOVFW   LECTURA
-    MOVWF   CCP41
-    BCF	    SERVO, 3
-    BSF	    SERVO, 0
-    BCF	    PORTD, RD7
     GOTO    CHECK_TXIF
     
     ;MOVWF   CCPR1L
@@ -372,7 +375,7 @@ DELAY_500US
     DECFSZ  DELAY1		    ;DECREMENTA CONT1
     GOTO    $-1			    ; IR A LA POSICION DEL PC - 1
     RETURN
-    ;---------------------------------------------------------------
+;---------------------------------------------------------------
     CONFIG_PWM1
     BANKSEL TRISC
     BSF	    TRISC, RC1		; ESTABLEZCO RC1 / CCP2 COMO ENTRADA
@@ -469,6 +472,8 @@ DELAY_500US
     BCF	    INTCON, RBIE
     BCF	    INTCON, INTF
     BCF	    INTCON, RBIF
+    BANKSEL PIE1
+    BSF	    PIE1, RCIE
     RETURN
     
     END
